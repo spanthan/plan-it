@@ -1,55 +1,65 @@
-import { ID } from "appwrite";
+import { ColumnDirective, ColumnsDirective, GridComponent } from "@syncfusion/ej2-react-grids"
 import { Header } from "components"
-import { useEffect } from "react";
-import { Outlet, redirect } from "react-router";
-import { storeUserData } from "~/appwrite/auth";
-import { account, appwriteConfig, tables } from "~/appwrite/client";
+import { getAllUsers } from "~/appwrite/auth"
+import { cn, formatDate } from "~/lib/utils"
+import type { Route } from "./+types/all-users"
 
+export const loader = async () => {
+    const { rows, total } = await getAllUsers (10, 0);
+    return {rows, total};
+}
 
-// const handleTestWrite = async () => {
-//     try {
-//         const user = await account.get();
-
-//         const doc = await tables.createRow({
-//             databaseId: appwriteConfig.databaseId,
-//             tableId: appwriteConfig.userCollectionId,
-//             rowId: ID.unique(),
-//             data: {
-//                 accountId: user.$id,
-//                 email: user.email,
-//                 name: user.name,
-//                 joinedAt: new Date().toISOString(),
-//               },
-//         });
-//         console.log("Test write success:", doc);
-//         alert("Test write success: " + doc.$id);
-//     } catch (error) {
-//         console.error("Test write failed:", error);
-//         alert("Test write failed. See console for details.");
-//     }
-// };
-
-const AllUsers = () => {
-      
+const AllUsers = ({loaderData}: Route.ComponentProps) => {
+    const {rows} = loaderData;
     return (
-        <main className="dashboard wrapper"> 
+        <main className="all-users wrapper"> 
             <Header 
-                title= "Trips Page"
-                description = "Check out our current users in real time"
+                title= "Manage Users"
+                description = "Filter, sort, and access detailed user profiles"
             />
-
-        {/* <aside className='children'>
-            <div style={{ padding: 12 }}>
-                <button onClick={handleTestWrite} style={{
-                    padding: "8px 12px",
-                    background: "#2563eb",
-                    color: "white",
-                    borderRadius: 6,
-                    fontWeight: 600
-                }}>Test DB Write</button>
-            </div>
-            <Outlet />
-        </aside> */}
+            <GridComponent dataSource={rows} gridLines="None">
+                <ColumnsDirective>
+                    <ColumnDirective 
+                        field="name"
+                        headerText="Name"
+                        width="200"
+                        textAlign="Left"
+                        template={(props: UserData) => (
+                            <div className="flex items-center gap-1.5 px-4">
+                                <img src={props.imageUrl} alt="user" className="rounded-full size-8 aspect-square" referrerPolicy="no-referrer"/>
+                                <span>{props.name}</span>
+                            </div>
+                        )}
+                    />
+                    <ColumnDirective 
+                        field="email"
+                        headerText="Email"
+                        width="200"
+                        textAlign="Left"
+                    />
+                    <ColumnDirective 
+                        field="joinedAt"
+                        headerText="Date Joined"
+                        width="140"
+                        textAlign="Left"
+                        template={({joinedAt} : {joinedAt: string}) => formatDate(joinedAt)}
+                    />
+                    <ColumnDirective 
+                        field="status"
+                        headerText="Type"
+                        width="100"
+                        textAlign="Left"
+                        template={({ status }: UserData) => (
+                            <article className={cn('status-column', status === 'user' ? 'bg-success-50' : 'bg-light-300')}>
+                                <div className={cn('size-1.5 rounded-full', status === 'user' ? 'bg-success-500' : 'bg-gray-500')} />
+                                <h3 className={cn("font-inter text-xs font-medium", status === 'user' ? 'text-success-700' : 'text-gray-500')}>
+                                    {status}
+                                </h3>
+                            </article>
+                        )}
+                    />
+                </ColumnsDirective>
+            </GridComponent>
         </main>
     )
 }
